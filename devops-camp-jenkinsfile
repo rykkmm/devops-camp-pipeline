@@ -1,20 +1,20 @@
 pipeline {
     agent {
-        environment {
+        
+    }
+        label 'jenkins-agent'
+    }
+    environment {
         PIPELINE_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         HARBOR_REGISTRY = 'harbor.dev.afsmtddso.com'
         HARBOR_PROJECT = 'rk-harbor-project'
         APP_IMAGE_NAME = 'app'
         DB_IMAGE_NAME = 'db'
     }
-        label 'jenkins-agent'
-    }
-    //TODO("Lab 4 - Artifact Management"): add environment variables
     stages {
         stage('Application repository') {
             steps {
                 echo "Cloning application repository"
-                //TODO("Lab 3 - Introduction to Automated Builds"): add github url
                 sh 'git clone https://github.com/rykkmm/afs-labs-student.git'
                 dir('afs-labs-student') {
                     script {
@@ -26,6 +26,7 @@ pipeline {
         }
         stage('Application docker build') {
             steps {
+                echo "Building application image"
                 withCredentials([usernameColonPassword(credentialsId: 'rkim-harbor-auth', variable: 'HARBOR-AUTH')]) {
                     script {
                         sh 'docker build -t $APP_IMAGE_NAME-$COMMIT_HASH -f ./app/Dockerfile ./afs-labs-student'
@@ -35,8 +36,7 @@ pipeline {
                         }
                     }
                 }
-                echo "Building application image"
-                //TODO("Lab 4 - Artifact Management"): build the docker app image
+                
             }
             post {
                 always {
@@ -55,6 +55,7 @@ pipeline {
         }
         stage('Database docker build') {
             steps {
+                echo "Building database image"
                 withCredentials([usernameColonPassword(credentialsId: 'rkim-harbor-auth', variable: 'HARBOR-AUTH')]) {
                     script {
                         sh 'docker build -t $DB_IMAGE_NAME-$COMMIT_HASH -f ./db/Dockerfile ./afs-labs-student'
@@ -64,8 +65,7 @@ pipeline {
                         }
                     }
                 }
-                echo "Building database image"
-                //TODO("Lab 4 - Artifact Management"): build the docker db image
+                
             }
             post {
                 always {
@@ -80,7 +80,6 @@ pipeline {
                     }
                 }
             }
-            //TODO("Lab 4 - Artifact Management"): clean local docker db image
         }
         //TODO("Lab 7 - Automated Security Scans"): add a stage
         stage('Deploy') {
